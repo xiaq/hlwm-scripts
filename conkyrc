@@ -1,0 +1,15 @@
+# vim: set ft=conkyrc:
+update_interval 1
+times_in_seconds yes
+format_human_readable no
+out_to_console yes
+out_to_x no
+
+#template1 ${if_up \1}\1=${addrs \1}${endif}
+template2 ${if_up \1}\1=${addrs \1} ${endif}
+
+TEXT
+conky	\
+${battery_percent BAT1}	\
+${memperc}	\
+${cpu cpu0}	\
