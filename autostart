@@ -115,12 +115,6 @@ hc unlock
 # hc move_monitor 0 1280x1024+0+0
 # hc add_monitor 1280x1024+1280+0
 
-# find the panel
-panel=~/.config/herbstluftwm/panel.sh
-[ -x "$panel" ] || panel=/etc/xdg/herbstluftwm/panel.sh
-for monitor in $(herbstclient list_monitors | cut -d: -f1) ; do
-    # start it on each monitor
-    $panel $monitor &
-done
+"$(dirname "$0")"/panels start
 
 # vi: se tw=0:

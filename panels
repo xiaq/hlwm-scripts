@@ -1,0 +1,15 @@
+#!/bin/sh
+verb=${1:-start}
+
+if [ "$verb" = stop -o "$verb" = restart ]; then
+    herbstclient emit_hook quit_panel
+fi
+
+if [ "$verb" = start -o "$verb" = restart ]; then
+    # start the panel on each monitor
+    panel="$(dirname "$0")"/panel
+    for monitor in $(herbstclient list_monitors | cut -d: -f1) ; do
+        # start it on each monitor
+        "$panel" $monitor &
+    done
+fi

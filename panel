@@ -10,6 +10,7 @@ if [ -z "$geometry" ] ;then
     echo "Invalid monitor $monitor"
     exit 1
 fi
+
 # geometry has the format: WxH+X+Y
 x=${geometry[0]}
 y=${geometry[1]}
@@ -20,6 +21,7 @@ title_font='Wenquanyi Micro Hei-11'
 bgcolor=$(herbstclient get frame_border_normal_color)
 selbg=$(herbstclient get window_border_active_color)
 selfg='#101010'
+separator="^bg()^fg($selbg)|"
 
 right_width=184
 
@@ -35,7 +37,7 @@ trayer --edge top --align right --widthtype request --height 22 \
 childpid+=($!)
 
 make_tag_part() {
-    tags=( $(herbstclient tag_status $monitor) )
+    local tags=( $(herbstclient tag_status $monitor) )
     for i in "${tags[@]}" ; do
         case ${i:0:1} in
             '#')
@@ -60,6 +62,23 @@ make_tag_part() {
     done
 }
 
+make_tabbar_part() {
+    local cur_winid=$1
+    local all_winids=($(herbstclient layout | sed -n 's/^.*: \(.*\)\[FOCUS\]$/\1/p'))
+    #local width=$tabbar_length
+    for i in "${all_winids[@]}"; do
+        local quoted_name=$(xprop -id $i _NET_WM_NAME)
+        local name=$(eval echo -n "${quoted_name#*= }")
+        echo -n "^ca(1,herbstclient jumpto $i)"
+        if [[ $i == $cur_winid ]]; then
+            echo -n "^bg($selbg)^fg($selfg)"
+        fi
+        echo -n "${name/^/^^} "
+        echo -n '^bg()^fg()'
+        echo -n '^ca()'
+    done
+}
+
 {
     while true; do
         date +'date ^fg(#efefef)%H:%M:^fg(#909090)%S, %m-^fg(#efefef)%d %a'
@@ -73,29 +92,27 @@ make_tag_part() {
     herbstclient --idle
     kill "${childpid[@]}"
 } | {
-    tag_part=$(make_tag_part)
     visible=true
-    date=""
-    windowtitle=""
-    sys_status=""
+    tag_part=$(make_tag_part)
+    tabbar_part=
+    date_part=
+    conky_part=
     while true; do
-        bordercolor="#26221C"
-        separator="^bg()^fg($selbg)|"
         # draw tags
         echo -n "$tag_part"
         echo -n "$separator"
 
         # system status
-        echo -n "^bg()^fg() $sys_status "
+        echo -n "^bg()^fg() $conky_part "
         echo -n "$separator"
 
         # tab bar
         echo -n "^fn($title_font)"
-        echo -n "^bg()^fg() ${tabbar_part//^/^^}"
+        echo -n "^bg()^fg() $tabbar_part"
         echo -n "^fn()"
 
         # right part: currently only date
-        right_part="$separator^bg() $date $separator"
+        right_part="$separator^bg() $date_part $separator"
         #right_text_only=$(echo -n "$right"|sed 's.\^[^(]*([^)]*)..g')
         # get width of right aligned text.. and add some space..
         #width=$($textwidth "$font" "$right_text_only    ")
@@ -110,10 +127,6 @@ make_tag_part() {
             tag*)
                 #echo "reseting tags" >&2
                 tag_part=$(make_tag_part)
-                ;;
-            date)
-                #echo "reseting date" >&2
-                date="${cmd[@]:1}"
                 ;;
             quit_panel)
                 exit
@@ -139,16 +152,14 @@ make_tag_part() {
                 exit
                 ;;
             focus_changed|window_title_changed)
-                cur_winid="${cmd[@]:1}"
-                all_winids=$(herbstclient layout | sed -ne '/\[FOCUS\]$/s/^.*:\(.*\)\[FOCUS\]$/\1/p')
-                width=$tabbar_width
-                tabbar_part=
-                for i in "${all_winids[@]}"; do
-                    tabbar_part=$tabbar_part$i
-                done
+                tabbar_part=$(make_tabbar_part ${cmd[@]:1})
                 ;;
             conky)
-                sys_status="${line#conky }"
+                conky_part="${line#conky }"
+                ;;
+            date)
+                #echo "reseting date" >&2
+                date_part="${cmd[@]:1}"
                 ;;
         esac
         done
