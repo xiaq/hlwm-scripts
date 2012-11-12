@@ -1,10 +1,11 @@
 #!/usr/bin/python2 -u
 import sys
+from os import environ
 from collections import deque
 
 
-TAG_FONT = 'Monospace-9'
-HEIGHT = 20
+TAG_FONT = environ.get('TAG_FONT', '')
+HEIGHT = int(environ.get('HEIGHT', '20'))
 
 
 class Gauge(object):
@@ -106,10 +107,13 @@ def main():
             sys.stderr.write('Warning: expect {nfmt} fields, got {nf}\n'
                              ''.format(nfmt=len(formatters), nf=len(fields)))
 
-        for i in xrange(n):
-            for f in formatters[i]:
-                sys.stdout.write(f.format(fields[i]))
-        sys.stdout.write('\n')
+        try:
+            for i in xrange(n):
+                for f in formatters[i]:
+                    sys.stdout.write(f.format(fields[i]))
+            sys.stdout.write('\n')
+        except IOError:  # likely just broken pipe
+            break
 
 
 if __name__ == '__main__':

@@ -17,11 +17,13 @@ y=${geometry[1]}
 panel_width=${geometry[2]}
 panel_height=20
 font='Monospace-10.5'
-title_font='Wenquanyi Micro Hei Mono-10.5'
+conky_tag_font='Monospace-9'
+title_font='Wenquanyi Micro Hei Mono-10'
 bgcolor=$(herbstclient get frame_border_normal_color)
 selbg=$(herbstclient get window_border_active_color)
 selfg='#101010'
-separator="^bg()^fg($selbg)|"
+sepfg=$selbg
+separator="^bg()^fg($sepfg)|"
 
 right_width=184
 
@@ -73,9 +75,9 @@ make_tabbar_part() {
         if [[ $i == $cur_winid ]]; then
             echo -n "^bg($selbg)^fg($selfg)"
         fi
-        echo -n "${name/^/^^} "
-        echo -n '^bg()^fg()'
-        echo -n '^ca()'
+        echo -n " ${name/^/^^} ^ca()"
+        echo -n "$separator"
+        echo -n '^fg()^bg()^ca()'
     done
 }
 
@@ -86,7 +88,7 @@ make_tabbar_part() {
     done &
     childpid+=($!)
 
-    conky -c $conkyrc > >($conkyfmt) &
+    conky -c $conkyrc > >(HEIGHT=$panel_height TAG_FONT=$conky_tag_font $conkyfmt) &
     childpid+=($!)
 
     herbstclient --idle
