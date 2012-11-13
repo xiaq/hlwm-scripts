@@ -70,6 +70,7 @@ hc mousebind $Mod-Button3 resize
 # focus
 hc keybind $Mod-BackSpace cycle_monitor
 hc keybind $Mod-Tab cycle
+hc keybind $Mod-grave cycle -1
 hc keybind $Mod-h focus left
 hc keybind $Mod-j focus down
 hc keybind $Mod-k focus up
