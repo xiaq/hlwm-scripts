@@ -49,7 +49,7 @@ Dependencies
 
 * latest dzen2 with xft patch
 
-* I use the font Wenquanyi MicroHei Mono for window titles because I write
+* I use the font WenQuanYi Zen Hei Sharp for window titles because I write
   Chinese. Change ``panel`` if you don't have it
 
 * conky, as source of system status info
