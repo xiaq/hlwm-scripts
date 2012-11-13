@@ -18,13 +18,18 @@ panel_width=${geometry[2]}
 panel_height=20
 font='Monospace-10.5'
 conky_tag_font='Monospace-9'
-title_font='Wenquanyi Micro Hei Mono-10'
+title_font='Wenquanyi Zen Hei Sharp-10'
 bgcolor=$(herbstclient get frame_border_normal_color)
 selbg=$(herbstclient get window_border_active_color)
 selfg='#101010'
 sepfg=$selbg
-separator="^bg()^fg($sepfg)|"
+separator="^bg()^fg($sepfg)|^fg()^bg()"
 
+# Maximum allowed length of tabbar (in chars) and width of rightside part(in
+# pixel).
+# I have to hardcode them before I found a way to calculate pixel width of
+# chars in xft fonts (textwidth only supports X fonts).
+tabbar_length=100
 right_width=184
 
 conkyrc=~/.config/herbstluftwm/conkyrc
@@ -34,7 +39,8 @@ childpid=()
 
 herbstclient pad $monitor $panel_height
 
-trayer --edge top --align right --widthtype request --height 22 \
+trayer --edge top --align right\
+    --widthtype request --height $panel_height \
     --margin $(( right_width + 6 )) --padding 5 &
 childpid+=($!)
 
@@ -62,22 +68,36 @@ make_tag_part() {
         echo -n " ${i:1} "
         echo -n "^ca()"
     done
+    echo -n '^bg()^fg()'
+}
+
+get_window_name() {
+    local name=$(xprop -id $1 WM_NAME)
+    name=${name#*= \"}
+    echo -n ${name%\"}
 }
 
 make_tabbar_part() {
     local cur_winid=$1
     local all_winids=($(herbstclient layout | sed -n 's/^.*: \(.*\)\[FOCUS\]$/\1/p'))
-    #local width=$tabbar_length
+    [[ ${#all_winids[@]} -eq 0 ]] && return
+    local name_width=$(( tabbar_length / ${#all_winids[@]} - 3 ))
+
+    # Too many windows... just give up
+    [[ $name_width -gt 0 ]] || return
+
     for i in "${all_winids[@]}"; do
-        local quoted_name=$(xprop -id $i _NET_WM_NAME)
-        local name=$(eval echo -n "${quoted_name#*= }")
         echo -n "^ca(1,herbstclient jumpto $i)"
-        if [[ $i == $cur_winid ]]; then
-            echo -n "^bg($selbg)^fg($selfg)"
-        fi
-        echo -n " ${name/^/^^} ^ca()"
+        [[ $i == $cur_winid ]] && echo -n "^bg($selbg)^fg($selfg)"
+
+        local name=$(get_window_name $i)
+        name=${name:0:$name_width}
+        printf ' %-*s ' $name_width "${name/^/^^}"
+
+        [[ $i == $cur_winid ]] && echo -n '^fg()^bg()'
+        echo -n '^ca()'
+
         echo -n "$separator"
-        echo -n '^fg()^bg()^ca()'
     done
 }
 
@@ -88,8 +108,10 @@ make_tabbar_part() {
     done &
     childpid+=($!)
 
-    conky -c $conkyrc > >(HEIGHT=$panel_height TAG_FONT=$conky_tag_font $conkyfmt) &
-    childpid+=($!)
+    if [ -z $DISABLE_CONKY ]; then
+        conky -c $conkyrc > >(HEIGHT=$panel_height TAG_FONT=$conky_tag_font $conkyfmt) &
+        childpid+=($!)
+    fi
 
     herbstclient --idle
     kill "${childpid[@]}"
@@ -105,16 +127,16 @@ make_tabbar_part() {
         echo -n "$separator"
 
         # system status
-        echo -n "^bg()^fg() $conky_part "
+        echo -n " $conky_part "
         echo -n "$separator"
 
         # tab bar
         echo -n "^fn($title_font)"
-        echo -n "^bg()^fg() $tabbar_part"
+        echo -n "$tabbar_part"
         echo -n "^fn()"
 
         # right part: currently only date
-        right_part="$separator^bg() $date_part $separator"
+        right_part="$separator $date_part $separator"
         #right_text_only=$(echo -n "$right"|sed 's.\^[^(]*([^)]*)..g')
         # get width of right aligned text.. and add some space..
         #width=$($textwidth "$font" "$right_text_only    ")
@@ -126,19 +148,19 @@ make_tabbar_part() {
         cmd=( $line )
         # find out event origin
         case "${cmd[0]}" in
-            tag*)
-                #echo "reseting tags" >&2
-                tag_part=$(make_tag_part)
-                ;;
-            quit_panel)
+            quit_panel|reload)
                 exit
                 ;;
+            tag*)
+                tag_part=$(make_tag_part)
+                ;;
             togglehidepanel)
-                currentmonidx=$(herbstclient list_monitors |grep ' \[FOCUS\]$'|cut -d: -f1)
-                if [ -n "${cmd[1]}" ] && [ "${cmd[1]}" -ne "$monitor" ] ; then
-                    continue
+                specified=${cmd[1]}
+                if [ "$specified" == current ]; then
+                    currentmonidx=$(herbstclient list_monitors |grep ' \[FOCUS\]$'|cut -d: -f1)
+                    specified=$currentmonidx
                 fi
-                if [ "${cmd[1]}" = "current" ] && [ "$currentmonidx" -ne "$monitor" ] ; then
+                if [ -n "$specified" ] && [ "$specified" != "$monitor" ]; then
                     continue
                 fi
                 echo "^togglehide()"
@@ -150,9 +172,6 @@ make_tabbar_part() {
                     herbstclient pad $monitor $panel_height
                 fi
                 ;;
-            reload)
-                exit
-                ;;
             focus_changed|window_title_changed)
                 tabbar_part=$(make_tabbar_part ${cmd[@]:1})
                 ;;
@@ -160,7 +179,6 @@ make_tabbar_part() {
                 conky_part="${line#conky }"
                 ;;
             date)
-                #echo "reseting date" >&2
                 date_part="${cmd[@]:1}"
                 ;;
         esac
