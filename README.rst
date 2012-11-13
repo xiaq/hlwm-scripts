@@ -26,6 +26,9 @@ are:
   * New ``conkyfmt`` and ``conkyrc`` to show system status battery gauge,
     memory gauge and CPU usage *timeline*
 
+  * A "global tab bar" showing titles of all window in current frame, with
+    current window highlighted. Titles are clickable too.
+
   * A screenshot of the panel in action:
     https://www.dropbox.com/s/56pgh3ix8xbp2et/mydzen.png
 
