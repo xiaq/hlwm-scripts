@@ -72,7 +72,11 @@ make_tag_part() {
 }
 
 get_window_name() {
+    # WM_NAME instead of _NET_WM_NAME is used to support legacy applications
+    # (like Xephyr). WM_NAME seems to be fine with new applications too.
     local name=$(xprop -id $1 WM_NAME)
+    # This is equivalent to: echo "$name" | sed 's/^[^=]*= "\(.*\)"$/\1/'
+    # Implemented in pure bash for performance.
     name=${name#*= \"}
     echo -n ${name%\"}
 }
