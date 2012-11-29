@@ -1,0 +1,29 @@
+#!/bin/bash
+# TODO multiple monitors support
+IFS=
+layouts=`mktemp -d`
+tags=`herbstclient tag_status`
+
+iterate_tags() {
+    func=$1
+    IFS='	'
+    for tag in $tags; do
+        IFS=
+        $func ${tag#?}
+    done
+}
+
+dump() {
+    herbstclient dump $1 > "$layouts/$1"
+}
+
+load() {
+    herbstclient load $1 "$(cat $layouts/$1)"
+}
+
+iterate_tags dump
+herbstclient wmexec
+sleep 3
+iterate_tags load
+
+rm -rf $layouts
