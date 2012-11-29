@@ -41,12 +41,12 @@ childpid=()
 
 herbstclient pad $monitor $panel_height
 
-trayer --edge top --align right\
-    --widthtype request --height $panel_height \
-    --margin $(( right_width + 6 )) --padding 5 &
-childpid+=($!)
-
 {
+    trayer --edge top --align right\
+        --widthtype request --height $panel_height \
+        --margin $(( right_width + 6 )) --padding 5 &
+    childpid+=($!)
+
     while true; do
         date +'date	^fg(#efefef)%H:%M:^fg(#909090)%S, %m-^fg(#efefef)%d %a'
         sleep 1 || break
@@ -54,7 +54,10 @@ childpid+=($!)
     childpid+=($!)
 
     if [ -z $DISABLE_CONKY ]; then
-        conky -c $conkyrc > >(HEIGHT=$panel_height TAG_FONT=$conky_tag_font $conkyfmt) &
+        (
+        export panel_height conky_tag_font
+        conky -c $conkyrc | $conkyfmt &
+        )
         childpid+=($!)
     fi
 
