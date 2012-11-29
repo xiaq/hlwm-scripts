@@ -1,11 +1,11 @@
 #!/usr/bin/python2 -u
 import sys
-from os import environ
 from collections import deque
 
+from utils import make_segment, import_config_from_env
 
-TAG_FONT = environ.get('TAG_FONT', '')
-HEIGHT = int(environ.get('HEIGHT', '20'))
+
+config = import_config_from_env(conky_tag_font='', panel_height=20)
 
 
 class Gauge(object):
@@ -13,7 +13,7 @@ class Gauge(object):
     A simple bar representing a percentage number.
     """
     def __init__(self, height_ratio, width, fg1='#ffffff', fg2='#888888'):
-        self.height = int(round(HEIGHT * height_ratio))
+        self.height = int(round(config['panel_height'] * height_ratio))
         self.width = width
         self.fg1 = fg1
         self.fg2 = fg2
@@ -22,14 +22,11 @@ class Gauge(object):
         value = int(value)
         width1 = int(round(self.width * (value / 100.0)))
         width2 = self.width - width1
-        parts = [
-            '^fg({fg})'.format(fg=self.fg1),
-            '^r({w}x{h})'.format(w=width1, h=self.height),
-            '^fg({fg})'.format(fg=self.fg2),
-            '^r({w}x{h})'.format(w=width2, h=self.height),
-            '^fg()',
-        ]
-        return ''.join(parts)
+        return '^fg({fg1})^r({w1}x{h})'\
+               '^fg({fg2})^r({w2}x{h})'\
+               '^fg()'.format(h=self.height,
+                              fg1=self.fg1, w1=width1,
+                              fg2=self.fg2, w2=width2)
 
 
 class Graph(object):
@@ -39,7 +36,7 @@ class Graph(object):
     """
     def __init__(self, height_ratio, width, npoll, dynamic_upper=False,
             upper=100, fg='#eeeeee'):
-        self.height = int(round(HEIGHT * height_ratio))
+        self.height = int(round(config['panel_height'] * height_ratio))
         self.width = width
         self.npoll = npoll
         self.dynamic_upper = dynamic_upper
@@ -74,7 +71,7 @@ class Graph(object):
 
 
 def tag(fmt):
-    return '^fn({0})'.format(TAG_FONT) + fmt + '^fn()'
+    return make_segment(fmt, fn=config['conky_tag_font'])
 
 formatters = [
     # 'conky'

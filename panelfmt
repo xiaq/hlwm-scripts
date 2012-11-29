@@ -1,18 +1,22 @@
 #!/usr/bin/python2 -u
 import re
-from os import environ
 from sys import stdin, stdout, exit
-from collections import deque
 from subprocess import check_output, CalledProcessError
 
-config = {}
-for var in ('monitor', 'separator',
-            'selected_fg', 'selected_bg', 'title_font'):
-    config[var] = environ.get(var, '')
+from utils import make_segment, import_config_from_env
 
-for var in ('panel_height', 'panel_width', 'right_width', 'tabbar_width'):
-    config[var] = int(environ.get(var, ''))
 
+config = import_config_from_env(
+    monitor='',
+    separator='|',
+    selected_fg='',
+    selected_bg='',
+    title_font='',
+    panel_height=20,
+    panel_width=600,
+    right_width=100,
+    tabbar_width=200,
+    )
 separator = config['separator']
 selected_fg_bg = (config['selected_fg'], config['selected_bg'])
 
@@ -65,23 +69,6 @@ def force_width(text, width, fillchar=' '):
         right_fills = fills - left_fills
         return fillchar * left_fills + text + fillchar * right_fills
     return newtext
-
-
-def make_segment(content, escape=True, **kwargs):
-    if escape:
-        content = content.replace('^', '^^')
-    parts = deque([content])
-
-    for tag, arg in kwargs.items():
-        if not isinstance(arg, basestring):
-            try:
-                arg = ','.join(map(str, arg))
-            except TypeError:
-                arg = str(arg)
-        if arg:
-            parts.appendleft('^{0}({1})'.format(tag, arg))
-            parts.append('^{0}()'.format(tag))
-    return ''.join(parts)
 
 
 def hc(*args):
