@@ -78,7 +78,7 @@ def tag(fmt):
 
 formatters = [
     # 'conky'
-    ['{0} '],
+    ['{0}\t'],
     # battery
     [tag('{0:>3}%B '),
         Gauge(height_ratio=0.5, width=32, fg1='#cccc00'),

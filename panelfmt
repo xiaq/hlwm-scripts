@@ -1,0 +1,204 @@
+#!/usr/bin/python2 -u
+import re
+from os import environ
+from sys import stdin, stdout, exit
+from collections import deque
+from subprocess import check_output, CalledProcessError
+
+config = {}
+for var in ('monitor', 'separator',
+            'selected_fg', 'selected_bg', 'title_font'):
+    config[var] = environ.get(var, '')
+
+for var in ('panel_height', 'panel_width', 'right_width', 'tabbar_width'):
+    config[var] = int(environ.get(var, ''))
+
+separator = config['separator']
+selected_fg_bg = (config['selected_fg'], config['selected_bg'])
+
+
+TAG_COLOR = {
+    '#': (config['selected_fg'], config['selected_bg']),  # selected
+    '+': ('#141414', '#9CA668'),  # tag selected on an unselected monitor
+    ':': ('#ffffff', ''),  # nonempty
+    '!': ('#ff0675', '#141414'),  # urgent
+}
+
+
+def get_display_width(text):
+    _codepoint_widths = [
+        (126,    1), (159,    0), (687,     1), (710,   0), (711,   1),
+        (727,    0), (733,    1), (879,     0), (1154,  1), (1161,  0),
+        (4347,   1), (4447,   2), (7467,    1), (7521,  0), (8369,  1),
+        (8426,   0), (9000,   1), (9002,    2), (11021, 1), (12350, 2),
+        (12351,  1), (12438,  2), (12442,   0), (19893, 2), (19967, 1),
+        (55203,  2), (63743,  1), (64106,   2), (65039, 1), (65059, 0),
+        (65131,  2), (65279,  1), (65376,   2), (65500, 1), (65510, 2),
+        (120831, 1), (262141, 2), (1114109, 1),
+    ]
+
+    def _get_codepoint_width(c):
+        if c == 0xe or c == 0xf:
+            return 0
+        for num, wid in _codepoint_widths:
+            if c <= num:
+                return wid
+        return 1  # Codepoint out of known range, guess half width
+    return sum(_get_codepoint_width(ord(c)) for c in text)
+
+
+def force_width(text, width, fillchar=' '):
+    if isinstance(text, str):
+        # treat as UTF-8 text
+        text = text.decode('utf-8')
+    n = 0
+    newtext = u''
+    for c in text:
+        n += get_display_width(c)
+        if n > width:
+            break
+        newtext += c
+    else:
+        # Iteration wasn't broken, text was short enough
+        fills = (width - n) / get_display_width(fillchar)
+        left_fills = fills / 2
+        right_fills = fills - left_fills
+        return fillchar * left_fills + text + fillchar * right_fills
+    return newtext
+
+
+def make_segment(content, escape=True, **kwargs):
+    if escape:
+        content = content.replace('^', '^^')
+    parts = deque([content])
+
+    for tag, arg in kwargs.items():
+        if not isinstance(arg, basestring):
+            try:
+                arg = ','.join(map(str, arg))
+            except TypeError:
+                arg = str(arg)
+        if arg:
+            parts.appendleft('^{0}({1})'.format(tag, arg))
+            parts.append('^{0}()'.format(tag))
+    return ''.join(parts)
+
+
+def hc(*args):
+    return check_output(['herbstclient'] + list(args))
+
+
+def get_window_title(winid):
+    # TODO: use xlib or xcb instead of process call
+    # WM_NAME instead of _NET_WM_NAME is used to support legacy applications
+    # (like Xephyr). WM_NAME seems to be fine with new applications too.
+    try:
+        line = check_output(['xprop', '-id', winid, 'WM_NAME'])
+    except CalledProcessError:
+        line = ''
+    prop, sep, value = line[:-1].partition('= ')
+    if not value:
+        return ''
+    else:
+        return value[1:-1]
+
+
+def get_current_frame_winids():
+    current_frame = hc('layout', '', '@')
+    return re.findall(r'0x[\da-fA-F]+', current_frame)
+
+
+def get_current_monitor_name():
+    lines = hc('list_monitors').splitlines()
+    line_for_current = next(l for l in lines if l.endswith('[FOCUS]'))
+    return line_for_current.partition(':')[0]
+
+
+def make_tag_part():
+    parts = []
+    tags = hc('tag_status', config['monitor']).strip().split()
+    for tag in tags:
+        flag, name = tag[0], tag[1:]
+
+        fg, bg = TAG_COLOR.get(flag, ('#ababab', ''))
+        cmd = ('herbstclient focus_monitor {0} && herbstclient use {1}'
+               .format(config['monitor'], name))
+
+        parts.append(make_segment(' %s ' % name, fg=fg, bg=bg, ca=[1, cmd]))
+
+    return ''.join(parts)
+
+
+def make_tabbar_part(current_winid):
+    winids = get_current_frame_winids()
+    if len(winids) == 0:
+        return ''
+    name_length = config['tabbar_width'] / len(winids) - 3
+    if name_length <= 0:
+        # TODO When there are too many windows, only show current window
+        # title and indicating there are others
+        return ''
+
+    parts = []
+    for i in winids:
+        fg = bg = ''
+        if i == current_winid:
+            fg, bg = selected_fg_bg
+        cmd = 'herbstclient jumpto %s' % i
+
+        title = get_window_title(i)
+        title = force_width(title, name_length).encode('utf-8')
+        title = ' %s ' % title
+
+        parts.append(make_segment(title, fg=fg, bg=bg, ca=[1, cmd]))
+        parts.append(separator)
+    return make_segment(''.join(parts), escape=False,
+                        fn=config['title_font'])
+
+
+def main():
+    visible = True
+    tag_part = make_tag_part()
+    tabbar_part = date_part = conky_part = ''
+
+    while True:
+        stdout.write(tag_part)
+        stdout.write(separator)
+        stdout.write(conky_part)
+        stdout.write(separator)
+        stdout.write(tabbar_part)
+        # TODO hardcoded right_width
+        stdout.write(make_segment(
+            '{1} {0} {1}'.format(date_part, separator), escape=False,
+            pa=config['panel_width'] - config['right_width']))
+        stdout.write('\n')
+
+        line = stdin.readline()
+        if not line.endswith('\n'):
+            break  # EOF
+        head, sep, tail = line[:-1].partition('\t')
+
+        if head in ('quit_panel', 'reload'):
+            exit()
+        elif head.startswith('tag_'):
+            tag_part = make_tag_part()
+        elif head in ('focus_changed', 'window_title_changed'):
+            winid, sep, tail = tail.partition('\t')
+            tabbar_part = make_tabbar_part(winid)
+        elif head == 'conky':
+            conky_part = tail
+        elif head == 'date':
+            date_part = tail
+        elif head == 'togglehidepanel':
+            specified = tail
+            if specified == 'current':
+                specified = get_current_monitor_name()
+            if specified and specified != config['monitor']:
+                continue
+            stdout.write('^togglehide()\n')
+            visible = not visible
+            hc('pad', config['monitor'],
+               str(config['panel_height'] * int(visible)))
+
+if __name__ == '__main__':
+    main()
