@@ -54,6 +54,6 @@ Dependencies
 
 * conky, as source of system status info
 
-* python2 (for ``conkyfmt``)
+* python2 (for ``conkyfmt`` and ``panelfmt``)
 
 * trayer, for system tray
