@@ -131,13 +131,14 @@ def make_tabbar_part(current_winid):
         fg = bg = ''
         if i == current_winid:
             fg, bg = selected_fg_bg
-        cmd = 'herbstclient jumpto %s' % i
+        # cmd = 'herbstclient jumpto %s' % i
 
         title = get_window_title(i)
         title = force_width(title, name_length).encode('utf-8')
         title = ' %s ' % title
 
-        parts.append(make_segment(title, fg=fg, bg=bg, ca=[1, cmd]))
+        # parts.append(make_segment(title, fg=fg, bg=bg, ca=[1, cmd]))
+        parts.append(make_segment(title, fg=fg, bg=bg))
         parts.append(separator)
     return make_segment(''.join(parts), escape=False,
                         fn=config['title_font'])

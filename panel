@@ -3,10 +3,11 @@
 # disable path name expansion or * will be expanded in the line
 # cmd=( $line )
 set -f
+IFS=''
 
 monitor=${1:-0}
-geometry=( $(herbstclient monitor_rect "$monitor") )
-if [ -z "$geometry" ] ;then
+IFS=' ' geometry=( $(herbstclient monitor_rect "$monitor") )
+if [ -z $geometry ] ;then
     echo "Invalid monitor $monitor"
     exit 1
 fi
@@ -32,7 +33,7 @@ separator="^fg($separator_fg)|^fg()"
 tabbar_width=104
 right_width=184
 
-mydir=$(dirname "$0")
+mydir=$(dirname $0)
 conkyrc=$mydir/conkyrc
 conkyfmt=$mydir/conkyfmt
 panelfmt=$mydir/panelfmt
@@ -53,7 +54,7 @@ herbstclient pad $monitor $panel_height
     done &
     childpid+=($!)
 
-    if [ -z $DISABLE_CONKY ]; then
+    if [[ -z $DISABLE_CONKY ]]; then
         (
         export panel_height conky_tag_font
         conky -c $conkyrc | $conkyfmt &
@@ -64,10 +65,10 @@ herbstclient pad $monitor $panel_height
     herbstclient --idle
     kill "${childpid[@]}"
 } | {(
-    export monitor separator selected_fg selected_bg title_font
-    export panel_height panel_width right_width tabbar_width
-    "$panelfmt"
+    export monitor separator selected_fg selected_bg title_font\
+           panel_height panel_width right_width tabbar_width
+    $panelfmt
 )} |
     dzen2 -w $panel_width -x $x -y $y \
-          -fn "$font" -h $panel_height \
-          -ta l -bg "$bgcolor" -fg '#efefef'
+          -fn $font -h $panel_height \
+          -ta l -bg $bgcolor -fg '#efefef'
