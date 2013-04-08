@@ -19,8 +19,7 @@ Mod=Mod4
 hc keybind $Mod-q close
 hc keybind $Mod-Shift-q quit
 hc keybind $Mod-Shift-r reload
-hc keybind $Mod-Return spawn pt-term
-hc keybind $Mod-backslash spawn exo-open --launch TerminalEmulator
+hc keybind $Mod-Return spawn exo-open --launch TerminalEmulator
 hc keybind $Mod-Escape spawn kupfer
 
 # tags
@@ -29,6 +28,7 @@ TAG_KEYS=( {1..6} 0 )
 
 # need to be done before tags creation
 hc set default_frame_layout 2
+hc set_layout max
 
 hc rename default "${TAG_NAMES[0]}" || true
 for i in ${!TAG_NAMES[@]} ; do
@@ -106,8 +106,9 @@ hc unrule -F
 hc rule focus=on
 hc rule windowtype~'_NET_WM_WINDOW_TYPE_(NOTIFICATION|DOCK)' manage=off
 hc rule windowtype~'_NET_WM_WINDOW_TYPE_(DIALOG|UTILITY|SPLASH)' pseudotile=on
-hc rule class~"Hybrid|Openfetion|File-roller|Gmrun|Kupfer\.py|Do|dosbox|ngspice|Cairo-compmgr|Fcitx-config-gtk|fontforge|Workrave|Palimpsest|Wine" pseudotile=on
+hc rule class~"Hybrid|Openfetion|File-roller|Gmrun|Kupfer\.py|Do|dosbox|ngspice|Cairo-compmgr|Fcitx-config-gtk|fontforge|Workrave|Palimpsest|Wine|Wish|VirtualBox|Cxsetup" pseudotile=on
 hc rule class=Firefox not windowrole=browser pseudotile=on
+hc rule class=Nautilus instance=file_progress pseudotile=on
 
 # unlock, just to be sure
 hc unlock

@@ -1,4 +1,4 @@
-#!/usr/bin/python2 -u
+#!/usr/bin/python2
 import re
 from sys import stdin, stdout, exit
 from subprocess import check_output, CalledProcessError
@@ -15,7 +15,6 @@ config = import_config_from_env(
     panel_height=20,
     panel_width=600,
     right_width=100,
-    tabbar_width=200,
     )
 separator = config['separator']
 selected_fg_bg = (config['selected_fg'], config['selected_bg'])
@@ -116,49 +115,21 @@ def make_tag_part():
     return ''.join(parts)
 
 
-def make_tabbar_part(current_winid):
-    winids = get_current_frame_winids()
-    if len(winids) == 0:
-        return ''
-    name_length = config['tabbar_width'] / len(winids) - 3
-    if name_length <= 0:
-        # TODO When there are too many windows, only show current window
-        # title and indicating there are others
-        return ''
-
-    parts = []
-    for i in winids:
-        fg = bg = ''
-        if i == current_winid:
-            fg, bg = selected_fg_bg
-        # cmd = 'herbstclient jumpto %s' % i
-
-        title = get_window_title(i)
-        title = force_width(title, name_length).encode('utf-8')
-        title = ' %s ' % title
-
-        # parts.append(make_segment(title, fg=fg, bg=bg, ca=[1, cmd]))
-        parts.append(make_segment(title, fg=fg, bg=bg))
-        parts.append(separator)
-    return make_segment(''.join(parts), escape=False,
-                        fn=config['title_font'])
-
-
 def main():
     visible = True
     tag_part = make_tag_part()
-    tabbar_part = date_part = conky_part = ''
+    date_part = conky_part = ''
 
     while True:
         stdout.write(tag_part)
         stdout.write(separator)
         stdout.write(conky_part)
         stdout.write(separator)
-        stdout.write(tabbar_part)
+        stdout.write(' {0} {1}'.format(date_part, separator))
         # TODO hardcoded right_width
-        stdout.write(make_segment(
-            '{1} {0} {1}'.format(date_part, separator), escape=False,
-            pa=config['panel_width'] - config['right_width']))
+        #stdout.write(make_segment(
+        #    '{0} {1}'.format(date_part, separator), escape=False,
+        #    pa=config['panel_width'] - config['right_width']))
         stdout.write('\n')
 
         line = stdin.readline()
@@ -172,7 +143,6 @@ def main():
             tag_part = make_tag_part()
         elif head in ('focus_changed', 'window_title_changed'):
             winid, sep, tail = tail.partition('\t')
-            tabbar_part = make_tabbar_part(winid)
         elif head == 'conky':
             conky_part = tail
         elif head == 'date':

@@ -10,6 +10,6 @@ template2 ${if_up \1}\1=${addrs \1} ${endif}
 
 TEXT
 conky	\
-${battery_percent BAT1}	\
+${battery_percent BAT0}	\
 ${memperc}	\
 ${cpu cpu0}	\

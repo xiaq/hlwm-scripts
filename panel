@@ -12,26 +12,20 @@ if [ -z $geometry ] ;then
     exit 1
 fi
 
-# geometry has the format: WxH+X+Y
+# geometry has the format: X+Y+WxH
 x=${geometry[0]}
 y=${geometry[1]}
-panel_width=${geometry[2]}
+#tray_width=100
+panel_width=616
+#panel_width=$(( geometry[2] - tray_width ))
 panel_height=20
 font='Monospace-10.5'
 conky_tag_font='Monospace-9'
-title_font='Wenquanyi Zen Hei Sharp-10'
 bgcolor=$(herbstclient get frame_border_normal_color)
 selected_bg=$(herbstclient get window_border_active_color)
 selected_fg='#101010'
 separator_fg=$selected_bg
 separator="^fg($separator_fg)|^fg()"
-
-# Maximum allowed length of tabbar (in chars) and width of rightside part(in
-# pixel).
-# I have to hardcode them before I found a way to calculate pixel width of
-# chars in xft fonts (textwidth only supports X fonts).
-tabbar_width=104
-right_width=184
 
 mydir=$(dirname $0)
 conkyrc=$mydir/conkyrc
@@ -43,13 +37,8 @@ childpid=()
 herbstclient pad $monitor $panel_height
 
 {
-    trayer --edge top --align right\
-        --widthtype request --height $panel_height \
-        --margin $(( right_width + 6 )) --padding 5 &
-    childpid+=($!)
-
     while true; do
-        date +'date	^fg(#efefef)%H:%M:^fg(#909090)%S, %m-^fg(#efefef)%d %a'
+        date +'date	^fg(#efefef)%H:%M:^fg(#909090)%S %m-^fg(#efefef)%d %a'
         sleep 1 || break
     done &
     childpid+=($!)
@@ -57,7 +46,7 @@ herbstclient pad $monitor $panel_height
     if [[ -z $DISABLE_CONKY ]]; then
         (
         export panel_height conky_tag_font
-        conky -c $conkyrc | $conkyfmt &
+        conky -c $conkyrc | stdbuf -oL $conkyfmt &
         )
         childpid+=($!)
     fi
@@ -65,9 +54,9 @@ herbstclient pad $monitor $panel_height
     herbstclient --idle
     kill "${childpid[@]}"
 } | {(
-    export monitor separator selected_fg selected_bg title_font\
-           panel_height panel_width right_width tabbar_width
-    $panelfmt
+    export monitor separator selected_fg selected_bg\
+           panel_height panel_width right_width
+    stdbuf -oL $panelfmt
 )} |
     dzen2 -w $panel_width -x $x -y $y \
           -fn $font -h $panel_height \
