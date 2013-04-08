@@ -1,5 +1,9 @@
 # xiaq's herbstluftwm scripts
 
+The major feature of this hlwm profile is a revamped dzen panel. Screenshot:
+
+![dzen panel](https://raw.github.com/xiaq/hlwm-scripts/master/screenshot.png)
+
 ## Overview
 
 Scripts here are based off herbstluftwm's default config. The main differences
@@ -23,9 +27,6 @@ are:
 
   * New `conkyfmt` and `conkyrc` to show system status battery gauge,
     memory gauge and CPU usage *timeline*
-
-  * A screenshot of the panel in action:
-    https://www.dropbox.com/s/56pgh3ix8xbp2et/mydzen.png
 
 
 ## Bugs
