@@ -26,9 +26,6 @@ are:
   * New ``conkyfmt`` and ``conkyrc`` to show system status battery gauge,
     memory gauge and CPU usage *timeline*
 
-  * A "global tab bar" showing titles of all window in current frame, with
-    current window highlighted. Titles are clickable too.
-
   * A screenshot of the panel in action:
     https://www.dropbox.com/s/56pgh3ix8xbp2et/mydzen.png
 
@@ -49,11 +46,6 @@ Dependencies
 
 * latest dzen2 with xft patch
 
-* I use the font WenQuanYi Zen Hei Sharp for window titles because I write
-  Chinese. Change ``panel`` if you don't have it
-
 * conky, as source of system status info
 
 * python2 (for ``conkyfmt`` and ``panelfmt``)
-
-* trayer, for system tray
