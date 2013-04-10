@@ -15,9 +15,7 @@ fi
 # geometry has the format: X+Y+WxH
 x=${geometry[0]}
 y=${geometry[1]}
-#tray_width=100
 panel_width=616
-#panel_width=$(( geometry[2] - tray_width ))
 panel_height=20
 font='Monospace-10.5'
 conky_tag_font='Monospace-9'
@@ -54,8 +52,7 @@ herbstclient pad $monitor $panel_height
     herbstclient --idle
     kill "${childpid[@]}"
 } | {(
-    export monitor separator selected_fg selected_bg\
-           panel_height panel_width right_width
+    export monitor separator selected_fg selected_bg panel_height
     stdbuf -oL $panelfmt
 )} |
     dzen2 -w $panel_width -x $x -y $y \

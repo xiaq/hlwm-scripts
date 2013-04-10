@@ -13,8 +13,6 @@ config = import_config_from_env(
     selected_bg='',
     title_font='',
     panel_height=20,
-    panel_width=600,
-    right_width=100,
     )
 separator = config['separator']
 selected_fg_bg = (config['selected_fg'], config['selected_bg'])
@@ -126,10 +124,6 @@ def main():
         stdout.write(conky_part)
         stdout.write(separator)
         stdout.write(' {0} {1}'.format(date_part, separator))
-        # TODO hardcoded right_width
-        #stdout.write(make_segment(
-        #    '{0} {1}'.format(date_part, separator), escape=False,
-        #    pa=config['panel_width'] - config['right_width']))
         stdout.write('\n')
 
         line = stdin.readline()
