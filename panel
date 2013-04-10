@@ -30,9 +30,20 @@ conkyrc=$mydir/conkyrc
 conkyfmt=$mydir/conkyfmt
 panelfmt=$mydir/panelfmt
 
+get_pgid() {
+    ps --no-headers -o '%r' "$@"
+}
+
 childpid=()
 
 herbstclient pad $monitor $panel_height
+
+run-mindock &
+# run-mindock needs its whole group killed
+childpid+=(-`get_pgid $!`)
+
+avant-window-navigator &
+childpid+=($!)
 
 {
     while true; do
@@ -50,7 +61,7 @@ herbstclient pad $monitor $panel_height
     fi
 
     herbstclient --idle
-    kill "${childpid[@]}"
+    kill -- "${childpid[@]}"
 } | {(
     export monitor separator selected_fg selected_bg panel_height
     stdbuf -oL $panelfmt
