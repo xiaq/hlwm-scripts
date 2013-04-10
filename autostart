@@ -97,7 +97,7 @@ hc set frame_gap 4
 hc set window_border_width 1 #2
 #hc set smart_window_surroundings 0
 
-hc set auto_detect_monitors 1
+hc set auto_detect_monitors 0
 
 hc set raise_on_focus 1
 
