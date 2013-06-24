@@ -105,6 +105,7 @@ hc set raise_on_focus 1
 hc unrule -F
 hc rule focus=on
 hc rule windowtype~'_NET_WM_WINDOW_TYPE_(NOTIFICATION|DOCK)' manage=off
+hc rule class=Mindock manage=off
 hc rule windowtype~'_NET_WM_WINDOW_TYPE_(DIALOG|UTILITY|SPLASH)' pseudotile=on
 hc rule class~"Hybrid|Openfetion|File-roller|Gmrun|Kupfer\.py|Do|dosbox|ngspice|Cairo-compmgr|Fcitx-config-gtk|fontforge|Workrave|Palimpsest|Wine|Wish|VirtualBox|Cxsetup" pseudotile=on
 hc rule class=Firefox not windowrole=browser pseudotile=on
