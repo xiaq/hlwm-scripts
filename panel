@@ -31,37 +31,29 @@ conkyfmt=$mydir/conkyfmt
 panelfmt=$mydir/panelfmt
 
 get_pgid() {
-    ps --no-headers -o '%r' "$@"
+    cut -d' ' -f5 /proc/$1/stat
 }
-
-childpid=()
 
 herbstclient pad $monitor $panel_height
 
-run-mindock &
-# run-mindock needs its whole group killed
-childpid+=(-`get_pgid $!`)
-
 avant-window-navigator &
-childpid+=($!)
+run-mindock &
 
 {
     while true; do
         date +'date	^fg(#efefef)%H:%M:^fg(#909090)%S %m-^fg(#efefef)%d %a'
         sleep 1 || break
     done &
-    childpid+=($!)
 
     if [[ -z $DISABLE_CONKY ]]; then
         (
         export panel_height conky_tag_font
-        conky -c $conkyrc | stdbuf -oL $conkyfmt &
-        )
-        childpid+=($!)
+        conky -c $conkyrc | stdbuf -oL $conkyfmt
+        ) &
     fi
 
     herbstclient --idle
-    kill -- "${childpid[@]}"
+    kill -- -`get_pgid $$`
 } | {(
     export monitor separator selected_fg selected_bg panel_height
     stdbuf -oL $panelfmt
