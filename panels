@@ -8,7 +8,7 @@ fi
 if [ "$verb" = start -o "$verb" = restart ]; then
     # start the panel on each monitor
     panel="$(dirname "$0")"/panel
-    for monitor in $(herbstclient list_monitors | cut -d: -f1) ; do
+    for monitor in $(herbstclient list_monitors | cut -d: -f1 | sort) ; do
         # start it on each monitor
         "$panel" $monitor &
     done
