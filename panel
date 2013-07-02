@@ -37,7 +37,7 @@ get_pgid() {
 herbstclient pad $monitor $panel_height
 
 avant-window-navigator &
-run-mindock &
+run-mindock "${geometry[@]}" &
 
 {
     while true; do
